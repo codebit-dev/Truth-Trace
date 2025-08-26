@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { UploadIcon, PhotoIcon, VideoIcon, AudioIcon } from './icons';
 

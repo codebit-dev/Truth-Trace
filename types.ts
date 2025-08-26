@@ -1,12 +1,14 @@
 
 export interface AnalysisResultType {
-  verdict: 'Real Image' | 'Potential Deepfake' | 'Uncertain';
+  verdict: 'Real' | 'AI Generated/Manipulated' | 'Uncertain';
   confidence: number;
   analysis: string[];
 }
 
 export interface HistoryItem {
   id: string;
-  image: string; // base64 data URL
+  mediaUrl: string;
+  mediaType: 'image' | 'video' | 'audio';
+  fileName: string;
   result: AnalysisResultType;
 }

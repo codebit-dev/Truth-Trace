@@ -1,5 +1,5 @@
 {
   "name": "DeepFake Detector",
-  "description": "An advanced AI-powered tool to detect deepfakes and manipulated images. Upload an image to receive a detailed analysis, verdict, and confidence score. Your analysis history is saved for easy access.",
+  "description": "An advanced AI-powered tool to detect deepfakes and manipulated images, videos, and audio. Upload a media file to receive a detailed analysis, verdict, and confidence score. Your analysis history is saved for easy access.",
   "requestFramePermissions": []
 }

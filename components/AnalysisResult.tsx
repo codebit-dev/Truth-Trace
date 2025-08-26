@@ -1,6 +1,7 @@
+
 import React from 'react';
 import type { AnalysisResultType } from '../types';
-import { CheckCircleIcon, ExclamationTriangleIcon, QuestionMarkCircleIcon, LoadingSpinnerIcon } from './icons';
+import { CheckCircleIcon, ExclamationTriangleIcon, QuestionMarkCircleIcon, AnalyzingIcon } from './icons';
 
 interface AnalysisResultProps {
   result: AnalysisResultType | null;
@@ -12,7 +13,7 @@ const VerdictDisplay: React.FC<{ result: AnalysisResultType }> = ({ result }) =>
   
   const getVerdictStyles = () => {
     switch (verdict) {
-      case 'Real Image':
+      case 'Real':
         return {
           icon: <CheckCircleIcon className="h-8 w-8 text-green-400" />,
           bgColor: 'bg-green-500/10',
@@ -20,7 +21,7 @@ const VerdictDisplay: React.FC<{ result: AnalysisResultType }> = ({ result }) =>
           borderColor: 'border-green-500/30',
           progressColor: 'bg-green-500',
         };
-      case 'Potential Deepfake':
+      case 'AI Generated/Manipulated':
         return {
           icon: <ExclamationTriangleIcon className="h-8 w-8 text-red-400" />,
           bgColor: 'bg-red-500/10',
@@ -64,14 +65,9 @@ const VerdictDisplay: React.FC<{ result: AnalysisResultType }> = ({ result }) =>
 export const AnalysisResult: React.FC<AnalysisResultProps> = ({ result, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="p-10 border-t border-brand-border text-center flex flex-col items-center justify-center">
-        <img
-          src="https://media.giphy.com/media/l4Epe8p5sY9p2t2Ba/giphy.gif"
-          alt="Analyzing..."
-          className="w-32 h-32 mx-auto mb-4 rounded-lg"
-          aria-label="Futuristic animation of an AI neural network processing information."
-        />
-        <p className="mt-4 text-lg font-medium text-brand-text-secondary">AI engaging neural network...</p>
+      <div className="p-10 border-t border-brand-border text-center flex flex-col items-center justify-center min-h-[20rem]">
+        <AnalyzingIcon />
+        <p className="mt-4 text-lg font-medium text-brand-text-secondary">Analyzing media...</p>
         <p className="text-sm text-brand-text-secondary/70">Performing deep forensic scan. Please wait.</p>
       </div>
     );

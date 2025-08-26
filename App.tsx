@@ -1,14 +1,15 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
-import { ImageUploader } from './components/ImageUploader';
+import { MediaUploader } from './components/MediaUploader';
 import { AnalysisResult } from './components/AnalysisResult';
 import { HistorySidebar } from './components/HistorySidebar';
-import { analyzeImageWithGemini } from './services/geminiService';
+import { analyzeMedia } from './services/geminiService';
 import type { AnalysisResultType, HistoryItem } from './types';
 
+type MediaType = 'image' | 'video' | 'audio';
+
 const App: React.FC = () => {
-  const [image, setImage] = useState<{ file: File; url: string } | null>(null);
+  const [media, setMedia] = useState<{ file: File; url: string; type: MediaType } | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResultType | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -28,17 +29,18 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (history.length > 0) {
-      localStorage.setItem('deepfake-history', JSON.stringify(history));
+    // Prevent saving empty history on initial load
+    if (history.length > 0 || localStorage.getItem('deepfake-history') !== null) {
+       localStorage.setItem('deepfake-history', JSON.stringify(history));
     }
   }, [history]);
 
-  const handleImageSelect = (file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    setImage({ file, url: imageUrl });
+  const handleMediaSelect = (file: File, type: MediaType) => {
+    const mediaUrl = URL.createObjectURL(file);
+    setMedia({ file, url: mediaUrl, type });
     setAnalysisResult(null);
     setError(null);
-    handleAnalysis(file, imageUrl);
+    handleAnalysis(file, mediaUrl, type);
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -53,33 +55,36 @@ const App: React.FC = () => {
     });
   };
 
-  const handleAnalysis = useCallback(async (file: File, imageUrl: string) => {
+  const handleAnalysis = useCallback(async (file: File, mediaUrl: string, type: MediaType) => {
     setIsLoading(true);
     setError(null);
     try {
       const base64Data = await fileToBase64(file);
       const mimeType = file.type;
-      const result = await analyzeImageWithGemini({ data: base64Data, mimeType });
+      const result = await analyzeMedia({ data: base64Data, mimeType, type });
 
       setAnalysisResult(result);
       
       const newHistoryItem: HistoryItem = {
         id: new Date().toISOString(),
-        image: imageUrl,
+        mediaUrl: mediaUrl,
+        mediaType: type,
+        fileName: file.name,
         result: result,
       };
       setHistory(prevHistory => [newHistoryItem, ...prevHistory.slice(0, 49)]);
 
     } catch (e) {
       console.error(e);
-      setError('Failed to analyze the image. The AI model may be unavailable or the image format is not supported. Please try again later.');
+      setError('Failed to analyze the media. The AI model may be unavailable or the file format is not supported. Please try again later.');
     } finally {
       setIsLoading(false);
     }
   }, []);
   
   const handleHistorySelect = (item: HistoryItem) => {
-    setImage({ file: new File([], "history_image"), url: item.image });
+    // We can't recreate the file object, but we can display the media and result
+    setMedia({ file: new File([], item.fileName), url: item.mediaUrl, type: item.mediaType });
     setAnalysisResult(item.result);
     setIsHistoryOpen(false);
     setError(null);
@@ -91,15 +96,15 @@ const App: React.FC = () => {
       <main className="container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">
-            AI-Powered DeepFake Detection
+            AI-Powered Media Forensics
           </h1>
           <p className="text-lg text-brand-text-secondary max-w-2xl mb-8">
-            Upload an image to scan for signs of digital manipulation and AI generation. Get a detailed forensic analysis in seconds.
+            Upload an image, video, or audio file to scan for signs of digital manipulation and AI generation. Get a detailed analysis in seconds.
           </p>
         </div>
 
         <div className="max-w-4xl mx-auto bg-brand-secondary rounded-xl border border-brand-border shadow-2xl overflow-hidden">
-          <ImageUploader onImageSelect={handleImageSelect} isAnalyzing={isLoading} currentImage={image?.url} />
+          <MediaUploader onMediaSelect={handleMediaSelect} isAnalyzing={isLoading} currentMedia={media} />
           {error && (
             <div className="p-6 border-t border-brand-border bg-red-900/20 text-red-300 text-center">
               <p><strong>Analysis Error:</strong> {error}</p>
@@ -113,6 +118,10 @@ const App: React.FC = () => {
         onClose={() => setIsHistoryOpen(false)}
         history={history}
         onSelect={handleHistorySelect}
+        onClear={() => {
+          setHistory([]);
+          localStorage.removeItem('deepfake-history');
+        }}
       />
     </div>
   );
